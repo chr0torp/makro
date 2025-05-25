@@ -577,6 +577,20 @@ plt.show()
 
 # %%
 """
+2. Explain the response of the economy to the demand shock in economic terms.
+
+the nominal interest rate increases in response to the demand shock.
+This increase reflects the central banks attempt to control inflation by tightening monetary policy. 
+
+The real interest rate also increases, reflecting the higher nominal rate adjusted for inflation expectations. 
+This response indicates a tightening of monetary policy to counteract the inflationary pressures from the demand shock, 
+aiming to stabilize the economy by controlling inflation while considering the output gap. 
+The dynamics illustrate how central banks use interest rates to manage economic fluctuations 
+and maintain price stability.
+"""
+
+# %%
+"""
 step 3 
 
 """
@@ -589,11 +603,16 @@ T = 100
 sim = prep_sim(par,T)
 
 # c. define (overwrite) shock sequences. We want a one time, one standard deviation increase in x_t in period 1 only
-sim['x_raw'][1] = 1
 
-sim ['x_raw'][1] = 0 
+sim['x_raw'][:] = 0
+sim['c_raw'][:] = 0
+sim ['x_raw'][1] = 1
+
+# sim['x_raw'][1] = 1
+# sim ['x_raw'][1] = 0 
 
 # d. run simulation
+simulate(par, sim, T)
 simulate_new(par,sim,T)
 
 # %%
@@ -622,9 +641,20 @@ ax.legend();
 # %%
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
-ax.plot(np.arange(0,T-1),sim['nominal interest rate'][1:],label='$y_t$, output gap')
-ax.plot(np.arange(0,T-1),sim['real interest rate'][1:],label='$\pi_t$, inflation gap')
+ax.plot(np.arange(0,T-1),sim['nominal interest rate'][1:],label='Nominal Interest Rate ($i$)')
+ax.plot(np.arange(0,T-1),sim['real interest rate'][1:],label='real interest rate ($r$)')
 ax.legend();
+
+# %%
+"""
+5. Explain the response of the economy to the supply shock in economic terms.
+
+As we can see in the figure showing inflation and output, a supply 
+shock will result in an increase in inflation and, afterwards, 
+a decrease in output, and then it will slowly stabilize. 
+This is the reason that the central bank needs to be careful when changing the interest rate, 
+since it greatly affects output.
+"""
 
 # %%
 """
@@ -683,6 +713,16 @@ print(f"Correlation between pi_t and pi_{T-1}: {corr_pi_pilag}")
 
 # %%
 """
+Inflation and output are positively correlated by 0.056.
+The reason for this is that an increase in inflation can be an 
+indicator that there is an increase in consumer confidence or 
+other spending which increases prices, wages, etc.
+
+If it's negative, it means that output falls when inflation rises.
+"""
+
+# %%
+"""
 <br>
 
 ## 6. Calibration (20%)
@@ -696,3 +736,36 @@ If you would like to, you can use a numerical optimizer or root finder to choose
 
 # %%
 # your code here
+
+phis = np.linspace(0.01, 1.0, 30)
+correlations = []
+T = 100
+
+for phi in phis:
+    par['phi'] = phi
+    sim = prep_sim(par, T)
+    simulate_new(par, sim, T)
+    y_sim = sim['y'][1:]
+    pi_sim = sim['pi'][1:]
+    corr_y_pi = np.corrcoef(y_sim, pi_sim)[0, 1]
+    correlations.append(corr_y_pi)
+
+
+# %%
+plt.figure()
+plt.plot(phis, correlations, marker='o')
+plt.axhline(0.31, color='red', linestyle='--', label='Empirical correlation 0.31')
+plt.xlabel(r'$\phi$')
+plt.ylabel(r'Correlation $corr(y_t, \pi_t)$')
+plt.title('Correlation between $y_t$ and $\pi_t$ as a function of $\phi$')
+plt.legend()
+plt.show()
+
+# %%
+phi_best = phis[np.argmin(np.abs(np.array(correlations) - 0.31))]
+print(f"Optimal phi value: {phi_best}")
+
+# %%
+"""
+Optimal phi value: 0.7610344827586207
+"""
